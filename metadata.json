@@ -1,0 +1,6 @@
+{
+  "name": "SafeUZ",
+  "description": "Citizen safety reporting and monitoring dashboard for Sirdaryo.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

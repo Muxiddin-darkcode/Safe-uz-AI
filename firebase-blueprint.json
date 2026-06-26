@@ -1,0 +1,28 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and roles",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "username": { "type": "string" },
+        "passwordHash": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "inspector", "admin"] },
+        "isActive": { "type": "boolean" },
+        "assignedRegion": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "fullName", "role", "isActive"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    }
+  }
+}
