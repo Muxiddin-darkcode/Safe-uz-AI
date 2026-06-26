@@ -448,9 +448,10 @@ export async function initTelegramBot(tokenOverride?: string): Promise<Telegraf 
         await adminDb.collection("report_events").doc(eventId).set(eventDoc);
 
         // Reply to user
-        let messageText = `✅ <b>Murojaatingiz qabul qilindi!</b>\n\n` +
-          `Sizning xabaringiz tahlil qilinib, mutaxassislarga yuborildi.\n` +
-          `Faolligingiz uchun rahmat!`;
+        let messageText = `✅ <b>Murojaatingiz qabul qilindi va tahlil etildi!</b>\n\n` +
+          `📊 <b>Xavf darajasi:</b> ${aiResult.score}%\n` +
+          `🤖 <b>AI Xulosasi:</b> <i>${escapeHtml(aiResult.summary)}</i>\n\n` +
+          `Sizning xabaringiz mutaxassislarga yuborildi. Faolligingiz uchun rahmat!`;
 
         sessions.set(ctx.from.id, { step: 'idle' });
         ctx.reply(messageText, { parse_mode: 'HTML', ...getMainMenuKeyboard() });
