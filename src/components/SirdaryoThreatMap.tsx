@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Shield, Crosshair, Radar } from 'lucide-react';
+import { AlertTriangle, Shield } from 'lucide-react';
 
 export type RiskLevel = "juda_yuqori" | "yuqori" | "orta" | "past" | "juda_past";
 
@@ -72,11 +72,48 @@ export default function SirdaryoThreatMap({ onDistrictSelect, hoveredDistrictId 
   const [rotation, setRotation] = useState(0);
   const activeHover = hoveredDistrictId || internalHover;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  // Measure container and scale 800x800 system to fit perfectly
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const updateScale = () => {
+      if (!containerRef.current) return;
+      const width = containerRef.current.clientWidth;
+      const height = containerRef.current.clientHeight || 500;
+      
+      const targetWidth = 800;
+      const targetHeight = 800;
+      
+      const scaleX = width / targetWidth;
+      const scaleY = height / targetHeight;
+      
+      // We want to scale down on small screens, but cap at 1.1x on ultra wide screens
+      const newScale = Math.min(scaleX, scaleY, 1.1);
+      setScale(Math.max(newScale, 0.38)); // set a minimum threshold so it doesn't vanish entirely
+    };
+
+    updateScale();
+    const resizeObserver = new ResizeObserver(() => {
+      updateScale();
+    });
+    
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   // Radar scanning effect
   useEffect(() => {
     const interval = setInterval(() => {
-      setRotation(prev => (prev + 1) % 360);
-    }, 50);
+      setRotation(prev => (prev + 1.5) % 360);
+    }, 40);
     return () => clearInterval(interval);
   }, []);
 
@@ -95,13 +132,23 @@ export default function SirdaryoThreatMap({ onDistrictSelect, hoveredDistrictId 
   };
 
   return (
-    <div className="relative w-full h-[600px] lg:h-[700px] flex items-center justify-center overflow-hidden">
+    <div 
+      ref={containerRef} 
+      className="relative w-full h-full min-h-[420px] sm:min-h-[500px] md:min-h-[600px] flex items-center justify-center overflow-hidden bg-transparent"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(6,182,212,0.05),_transparent)] pointer-events-none"></div>
       
-      {/* Container to scale easily */}
-      <div className="relative w-[800px] h-[800px] scale-[0.6] sm:scale-75 lg:scale-90 xl:scale-100 flex items-center justify-center">
+      {/* Container to scale easily - always centered exactly */}
+      <div 
+        className="relative w-[800px] h-[800px] flex-shrink-0 flex items-center justify-center origin-center transition-transform duration-300 ease-out"
+        style={{ transform: `scale(${scale})` }}
+      >
         
         {/* Radar Background & Grids */}
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div 
+          className="absolute pointer-events-none flex items-center justify-center"
+          style={{ left: '400px', top: '400px', transform: 'translate(-50%, -50%)', width: '800px', height: '800px' }}
+        >
           <div className="w-[700px] h-[700px] rounded-full border border-slate-800/80 bg-slate-900/20"></div>
           <div className="absolute w-[500px] h-[500px] rounded-full border border-slate-700/50"></div>
           <div className="absolute w-[300px] h-[300px] rounded-full border border-cyan-900/30 bg-cyan-950/10"></div>
@@ -123,7 +170,10 @@ export default function SirdaryoThreatMap({ onDistrictSelect, hoveredDistrictId 
         </div>
 
         {/* Central Core */}
-        <div className="absolute z-10 w-24 h-24 bg-slate-950 border border-cyan-500 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(6,182,212,0.3)]">
+        <div 
+          className="absolute z-10 w-24 h-24 bg-slate-950 border border-cyan-500 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(6,182,212,0.3)]"
+          style={{ left: '400px', top: '400px', transform: 'translate(-50%, -50%)' }}
+        >
            <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-20 animate-ping" style={{ animationDuration: '3s' }}></div>
            <Shield className="w-10 h-10 text-cyan-400" />
         </div>
