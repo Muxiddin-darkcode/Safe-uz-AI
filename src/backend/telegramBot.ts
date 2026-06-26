@@ -23,9 +23,7 @@ const sessions = new Map<number, UserSession>();
 
 const getMainMenuKeyboard = () => {
   return Markup.keyboard([
-    ['📝 Report yuborish', '📂 Mening reportlarim'],
-    ['ℹ️ Bot haqida', '🆘 Yordam'],
-    ['🌐 SafeUZ AI sayti']
+    ['📝 Report yuborish']
   ]).resize();
 };
 
@@ -33,7 +31,7 @@ const getThreatTypeKeyboard = () => {
   return Markup.keyboard([
     ['🚨 Narkotik tahdid', '🎣 Phishing link'],
     ['📦 Shubhali APK', '📲 Telegram scam'],
-    ['⚠️ Boshqa tahdid', '🔙 Orqaga']
+    ['⚠️ Boshqa tahdid', '❌ Bekor qilish']
   ]).resize();
 };
 
@@ -88,79 +86,14 @@ export async function initTelegramBot(tokenOverride?: string): Promise<Telegraf 
       sessions.set(ctx.from.id, { step: 'idle' });
       ctx.reply(
         "Xush kelibsiz! Men **SafeUZ AI** botiman 🇺🇿\n\n" +
-        "Siz bu yerda shubhali xavflar, narkotik savdosi, phishing va firibgarlik haqida xabar berishingiz mumkin.\n" +
-        "Barcha xabarlar AI orqali tahlil qilinadi va xavfsiz tarzda saqlanadi.",
+        "Siz bu yerda shubhali xavflar, narkotik savdosi, fishing va firibgarlik haqida xabar berishingiz mumkin.",
         { parse_mode: 'Markdown', ...getMainMenuKeyboard() }
       );
-    });
-
-    bot.hears('🌐 SafeUZ AI sayti', (ctx) => {
-      ctx.reply("Platformamiz bilan tanishing:\n\n🌐 https://safeuz-ai.uz", getMainMenuKeyboard());
-    });
-
-    bot.hears('ℹ️ Bot haqida', (ctx) => {
-      ctx.reply(
-        "🤖 *SafeUZ AI* — bu sun'iy intellektga asoslangan tahdidlarni aniqlash va monitoring qilish platformasi.\n\n" +
-        "Biz nimalarni tahlil qilamiz?\n" +
-        "🚭 Narkotik reklama va savdosi\n" +
-        "🎣 Phishing linklar va scam\n" +
-        "📦 Shubhali zararli APK fayllar\n" +
-        "📲 Telegramdagi turli xil firibgarliklar\n\n" +
-        "Yuborilgan reportlar avtomatik tarzda xavf darajasiga ko'ra Admin va Inspektorlarga yo'naltiriladi.",
-        { parse_mode: 'Markdown', ...getMainMenuKeyboard() }
-      );
-    });
-
-    bot.hears('🆘 Yordam', (ctx) => {
-      ctx.reply(
-        "📋 *Qanday qilib report yuborish mumkin?*\n\n" +
-        "1. Pastdagi *📝 Report yuborish* tugmasini bosing.\n" +
-        "2. Tahdid turini tanlang (masalan, Narkotik tahdid).\n" +
-        "3. Bot so'ragan ma'lumotlarni (matn, rasm, lokatsiya) yuboring.\n" +
-        "4. Ma'lumotlarni tasdiqlab yuboring.\n\n" +
-        "💡 *Eslatma:* Ixtiyoriy qadamlarni '⏭ O'tkazib yuborish' orqali chetlab o'tish mumkin.",
-        { parse_mode: 'Markdown', ...getMainMenuKeyboard() }
-      );
-    });
-
-    bot.hears('🔙 Orqaga', (ctx) => {
-      sessions.set(ctx.from.id, { step: 'idle' });
-      ctx.reply("Asosiy menyuga qaytdingiz.", getMainMenuKeyboard());
     });
 
     bot.hears('❌ Bekor qilish', (ctx) => {
       sessions.set(ctx.from.id, { step: 'idle' });
       ctx.reply("Amaliyot bekor qilindi. Asosiy menyuga qaytdingiz.", getMainMenuKeyboard());
-    });
-
-    bot.hears('📂 Mening reportlarim', async (ctx) => {
-      const userId = `telegram_${ctx.from.id}`;
-      try {
-        const snapshot = await adminDb.collection("reports")
-          .where("reporterId", "==", userId)
-          .orderBy("createdAt", "desc")
-          .limit(5)
-          .get();
-        
-        if (snapshot.empty) {
-          return ctx.reply("Sizda hozircha yuborilgan reportlar yo'q.", getMainMenuKeyboard());
-        }
-
-        let msg = "📂 *Sizning oxirgi reportlaringiz:*\n\n";
-        snapshot.forEach(doc => {
-          const data = doc.data() as Report;
-          msg += `🆔 ID: \`${data.id}\`\n`;
-          msg += `🚨 Tur: ${data.threatType.toUpperCase()}\n`;
-          msg += `📊 Xavf: ${data.aiRiskLevel || 'Kutilmoqda'}\n`;
-          msg += `⏳ Holat: ${data.status.replace(/_/g, ' ')}\n`;
-          msg += `📅 Sana: ${new Date(data.createdAt).toLocaleDateString()}\n\n`;
-        });
-
-        ctx.reply(msg, { parse_mode: 'Markdown', ...getMainMenuKeyboard() });
-      } catch (err) {
-        console.error("Error fetching reports:", err);
-        ctx.reply("Reportlarni yuklashda xatolik yuz berdi. Tizim to'liq integratsiya qilinmoqda.", getMainMenuKeyboard());
-      }
     });
 
     bot.hears('📝 Report yuborish', (ctx) => {
@@ -252,7 +185,7 @@ export async function initTelegramBot(tokenOverride?: string): Promise<Telegraf 
       let session = sessions.get(ctx.from.id);
       
       const text = ctx.message.text || ctx.message.caption || '';
-      const isSystemCommand = text && ['📝 Report yuborish', '📂 Mening reportlarim', 'ℹ️ Bot haqida', '🆘 Yordam', '🌐 SafeUZ AI sayti', '❌ Bekor qilish', '🔙 Orqaga', '✅ Yuborish', '⏭ O\'tkazib yuborish'].includes(text);
+      const isSystemCommand = text && ['📝 Report yuborish', '❌ Bekor qilish', '✅ Yuborish', '⏭ O\'tkazib yuborish'].includes(text);
 
       if (!session || session.step === 'idle' || session.step === 'select_threat') {
         if (!isSystemCommand) {
@@ -285,7 +218,7 @@ export async function initTelegramBot(tokenOverride?: string): Promise<Telegraf 
 
           showConfirmation(ctx, session);
           return;
-        } else if (isSystemCommand && !['📝 Report yuborish', '📂 Mening reportlarim', 'ℹ️ Bot haqida', '🆘 Yordam', '🌐 SafeUZ AI sayti'].includes(text)) {
+        } else if (isSystemCommand && !['📝 Report yuborish'].includes(text)) {
            return;
         }
       }
@@ -515,16 +448,9 @@ export async function initTelegramBot(tokenOverride?: string): Promise<Telegraf 
         await adminDb.collection("report_events").doc(eventId).set(eventDoc);
 
         // Reply to user
-        let messageText = `✅ <b>Report muvaffaqiyatli saqlandi va tahlil qilindi!</b>\n\n` +
-          `<b>ID:</b> <code>${reportId}</code>\n` +
-          `<b>AI Xavf Darajasi:</b> ${aiResult.risk_level} (Score: ${aiResult.score}%)\n\n` +
-          `<b>AI Xulosasi:</b> <i>${escapeHtml(aiResult.summary)}</i>\n\n`;
-
-        if (status === "queued_for_inspector") {
-          messageText += `🚨 <b>Diqqat!</b> Bu xabar yuqori xavf darajasiga ega deb topildi va zudlik bilan tuman inspektorlariga yuborildi.`;
-        } else {
-          messageText += `🛡️ Xabar admin dashboard orqali ko'rib chiqish uchun yuborildi.`;
-        }
+        let messageText = `✅ <b>Murojaatingiz qabul qilindi!</b>\n\n` +
+          `Sizning xabaringiz tahlil qilinib, mutaxassislarga yuborildi.\n` +
+          `Faolligingiz uchun rahmat!`;
 
         sessions.set(ctx.from.id, { step: 'idle' });
         ctx.reply(messageText, { parse_mode: 'HTML', ...getMainMenuKeyboard() });

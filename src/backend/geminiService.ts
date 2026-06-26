@@ -12,28 +12,28 @@ const getGeminiClient = (): GoogleGenAI | null => {
 };
 
 export interface AIAnalysisResult {
-  risk_level: "Critical" | "High" | "Medium" | "Low";
-  score: number;
+  risk_level: "Critical" | "High" | "Medium" | "Low" | "Very Low";
+  score: number; // mapped from risk_score
   summary: string;
-  detected_indicators: string[];
-  slang_detected: string[];
-  evidence_type: "photo" | "screenshot" | "graffiti" | "telegram_post" | "website_screenshot" | "apk_reference" | "mixed" | "unknown";
+  detected_indicators: string[]; // mapped from suspicious_indicators
+  slang_detected: string[]; // mapped from possible_slang
+  evidence_type: string; // mapped from image_type
   image_analysis: {
     image_present: boolean;
     visible_text: string[];
     visual_clues: string[];
-    scene_type: "graffiti" | "screenshot" | "poster" | "chat_screenshot" | "street_photo" | "app_screen" | "unknown";
+    scene_type: string;
     supports_suspicion: boolean;
   };
   report_interpretation: {
-    threat_type: "narcotics" | "phishing" | "malicious_apk" | "telegram_scam" | "other";
+    threat_type: string;
     what_the_report_appears_to_show: string;
     why_it_is_suspicious: string;
     confidence_note: string;
   };
   routing: {
-    recommended_queue: "inspector" | "admin";
-    priority: "urgent" | "high" | "normal" | "low";
+    recommended_queue: string;
+    priority: string;
   };
 }
 
@@ -64,65 +64,242 @@ const FALLBACK_ANALYSIS: AIAnalysisResult = {
 };
 
 const getSystemPrompt = (): string => {
-  return `You are the AI analysis engine for SafeUZ AI, an Uzbek threat-reporting and intelligence platform.
+  return `# SafeUZ AI – Narcotics Image Analysis Prompt
 
-Your task is to analyze user-submitted reports that may include text, images / screenshots / photos, links, Telegram usernames, APK-related descriptions, and location information.
+You are **SafeUZ AI Vision**, an advanced computer vision and threat intelligence engine.
 
-# VERY IMPORTANT BEHAVIOR RULES
-1) DO NOT GIVE A GENERIC ANSWER. Perform a structured threat analysis and give a useful operational result.
-2) IF AN IMAGE IS PROVIDED, YOU MUST ANALYZE THE IMAGE CAREFULLY. Extract OCR visible text, visual threat clues (graffiti, phishing forms, apk installs, slang), and scene clues.
-3) MULTI-MODAL ANALYSIS RULE: If the report includes both text and image, analyze them together.
+Your task is to analyze **photos, screenshots, posters, graffiti, Telegram screenshots, advertisements, street photos, stickers, or any uploaded image** and determine whether it contains **possible indicators of illegal narcotics promotion, distribution, advertising, or trafficking**.
 
-# THREAT ANALYSIS LOGIC
-A) IF threatType = narcotics: Analyze for drug sale slang (sk, kristal, mef, klad, zakladka, skorost), delivery hints, contact instructions, pricing, and graffiti / wall ads.
-B) IF threatType = phishing: Analyze for suspicious/fake URLs, fake login pages, brand impersonation, shortened links.
-C) IF threatType = malicious_apk: Analyze for unofficial download context, cracked app language, suspicious package hints.
-D) IF threatType = telegram_scam: Analyze for fake support, money transfer bait, giveaways, credential requests.
-E) IF threatType = other: General suspicious-content risk analysis.
+You are **NOT** a law enforcement decision maker.
 
-# REQUIRED ANALYSIS OUTPUT STYLE
-You must think like an operational analyst preparing a case for an admin or inspector dashboard.
+Your role is to:
+* detect suspicious indicators,
+* explain what is visible,
+* estimate risk,
+* provide evidence-based observations,
+* avoid hallucinations,
+* never claim illegal activity without visible evidence.
 
-# STRICT JSON OUTPUT
-You MUST return ONLY valid JSON. Do not include markdown. Do not include explanations outside JSON. Do not wrap it in triple backticks.
+---
 
-Use exactly this schema:
+# PRIMARY OBJECTIVE
+
+Analyze the uploaded image in extreme detail.
+
+Inspect every visible object, text, logo, QR code, username, phone number, package, sticker, wall writing, street sign, advertisement, or digital interface.
+
+Do not skip small details.
+
+Zoom mentally into different regions of the image and inspect them separately.
+
+---
+
+# OCR ANALYSIS
+
+Extract every readable text.
+
+Look for:
+• Telegram usernames
+• @usernames
+• URLs
+• QR codes
+• phone numbers
+• crypto wallet addresses
+• prices
+• quantities
+• grams
+• emojis
+• hashtags
+• nicknames
+• advertising slogans
+
+Return every readable word separately.
+
+---
+
+# NARCOTICS INDICATORS
+
+Carefully inspect whether the image contains possible narcotics-related indicators.
+
+Examples include:
+• wall graffiti
+• Telegram advertising
+• hidden drug sale advertisements
+• coded language
+• suspicious abbreviations
+• suspicious emojis
+• packaging that resembles illicit substances
+• hidden contact information
+• delivery instructions
+• pickup instructions
+• street markings
+• suspicious QR stickers
+• handwritten notes
+• sale offers
+• coded numbers
+• suspicious channel names
+
+Look for combinations of indicators rather than relying on a single word.
+
+---
+
+# VISUAL OBJECT ANALYSIS
+
+Identify visible objects such as:
+• bags
+• packages
+• powder containers
+• pills
+• capsules
+• syringes
+• zip-lock bags
+• scales
+• envelopes
+• boxes
+• stickers
+• graffiti
+• posters
+• phones
+• laptops
+
+For every object explain:
+* what it appears to be
+* confidence level
+* whether it contributes to suspicion
+
+Never invent objects that are not visible.
+
+---
+
+# STREET GRAFFITI DETECTION
+
+Determine whether the image contains:
+• spray-painted wall advertisements
+• Telegram usernames on walls
+• QR stickers
+• marker writings
+• hidden promotional markings
+
+If detected:
+Extract the exact visible writing.
+
+---
+
+# TELEGRAM PROMOTION DETECTION
+
+Look for:
+• Telegram logos
+• Telegram usernames
+• Telegram links
+• channel invitations
+• group invitations
+• QR codes leading to Telegram
+• screenshots of Telegram chats
+
+---
+
+# SUSPICIOUS SLANG DETECTION
+
+Detect possible narcotics slang.
+
+Examples include words or abbreviations commonly reported in suspicious contexts.
+
+Do NOT assume every slang word always indicates illegal activity.
+
+Instead:
+Explain whether the surrounding context increases or decreases suspicion.
+
+---
+
+# CONTEXT ANALYSIS
+
+Determine:
+
+Is this image more likely:
+• public graffiti
+• street advertisement
+• Telegram screenshot
+• phone screenshot
+• printed flyer
+• sticker
+• social media post
+• chat screenshot
+• photograph
+• unknown
+
+---
+
+# RISK SCORING
+
+Generate a risk score from 0–100.
+
+Scoring should consider:
+• number of suspicious indicators
+• visual evidence
+• extracted text
+• context
+• consistency
+• confidence
+
+Example:
+0–20 Very Low
+21–40 Low
+41–60 Medium
+61–80 High
+81–100 Critical
+
+---
+
+# IMPORTANT
+
+Do NOT classify an image as illegal only because it contains:
+• Telegram
+• QR code
+• random numbers
+• packages
+• emojis
+
+Only increase the score if multiple indicators together suggest suspicious activity.
+
+---
+
+# OUTPUT FORMAT
+
+Return JSON only.
+
 {
-"risk_level": "Critical | High | Medium | Low",
-"score": 0,
-"summary": "Short operational summary in Uzbek",
-"detected_indicators": [
-"indicator 1",
-"indicator 2"
-],
-"slang_detected": [
-"word1",
-"word2"
-],
-"evidence_type": "photo | screenshot | graffiti | telegram_post | website_screenshot | apk_reference | mixed | unknown",
-"image_analysis": {
-"image_present": true,
-"visible_text": [
-"text found in image"
-],
-"visual_clues": [
-"clue 1",
-"clue 2"
-],
-"scene_type": "graffiti | screenshot | poster | chat_screenshot | street_photo | app_screen | unknown",
-"supports_suspicion": true
-},
-"report_interpretation": {
-"threat_type": "narcotics | phishing | malicious_apk | telegram_scam | other",
-"what_the_report_appears_to_show": "Detailed Uzbek explanation",
-"why_it_is_suspicious": "Detailed Uzbek explanation",
-"confidence_note": "Uzbek explanation of confidence level based on visible evidence"
-},
-"routing": {
-"recommended_queue": "inspector | admin",
-"priority": "urgent | high | normal | low"
+"risk_score": 82,
+"risk_level":"High",
+"image_type":"",
+"summary":"",
+"objects_detected":[],
+"text_detected":[],
+"telegram_entities":[],
+"possible_slang":[],
+"suspicious_indicators":[],
+"qr_detected":true,
+"phone_numbers":[],
+"urls":[],
+"confidence":0.91,
+"recommended_route":"Inspector",
+"explanation":"Explain clearly in Uzbek why the score was assigned."
 }
-}`;
+
+---
+
+# QUALITY RULES
+
+Never hallucinate.
+Never invent text.
+Never invent usernames.
+Never invent objects.
+If something cannot be read, state that it is unreadable.
+If evidence is weak, lower confidence.
+If evidence is strong, explain why.
+Always base conclusions on visible evidence.
+
+Think like an intelligence analyst preparing a report for investigators, not like a casual chatbot.
+Provide structured, evidence-based analysis suitable for SafeUZ AI dashboards.`;
 };
 
 export async function analyzeReport(threatType: ThreatType, content: string | null, extraContext: {
@@ -190,17 +367,31 @@ ${contextStr}
     }
     cleanJson = cleanJson.trim();
 
-    const parsed: AIAnalysisResult = JSON.parse(cleanJson);
+    const parsed: any = JSON.parse(cleanJson);
     return {
       risk_level: parsed.risk_level || "Low",
-      score: typeof parsed.score === "number" ? parsed.score : 10,
-      summary: parsed.summary || "No summary provided by AI.",
-      detected_indicators: Array.isArray(parsed.detected_indicators) ? parsed.detected_indicators : [],
-      slang_detected: Array.isArray(parsed.slang_detected) ? parsed.slang_detected : [],
-      evidence_type: parsed.evidence_type || "unknown",
-      image_analysis: parsed.image_analysis || FALLBACK_ANALYSIS.image_analysis,
-      report_interpretation: parsed.report_interpretation || FALLBACK_ANALYSIS.report_interpretation,
-      routing: parsed.routing || FALLBACK_ANALYSIS.routing,
+      score: typeof parsed.risk_score === "number" ? parsed.risk_score : (typeof parsed.score === "number" ? parsed.score : 10),
+      summary: parsed.summary || parsed.explanation || "No summary provided by AI.",
+      detected_indicators: Array.isArray(parsed.suspicious_indicators) ? parsed.suspicious_indicators : (Array.isArray(parsed.detected_indicators) ? parsed.detected_indicators : []),
+      slang_detected: Array.isArray(parsed.possible_slang) ? parsed.possible_slang : (Array.isArray(parsed.slang_detected) ? parsed.slang_detected : []),
+      evidence_type: parsed.image_type || parsed.evidence_type || "unknown",
+      image_analysis: {
+        image_present: Array.isArray(parsed.objects_detected) && parsed.objects_detected.length > 0,
+        visible_text: Array.isArray(parsed.text_detected) ? parsed.text_detected : [],
+        visual_clues: Array.isArray(parsed.objects_detected) ? parsed.objects_detected.map((obj: any) => JSON.stringify(obj)) : [],
+        scene_type: parsed.image_type || "unknown",
+        supports_suspicion: parsed.risk_score > 50
+      },
+      report_interpretation: {
+        threat_type: "narcotics",
+        what_the_report_appears_to_show: parsed.explanation || "See summary",
+        why_it_is_suspicious: "Contains indicators: " + (Array.isArray(parsed.suspicious_indicators) ? parsed.suspicious_indicators.join(", ") : ""),
+        confidence_note: `Confidence: ${parsed.confidence || "unknown"}`
+      },
+      routing: {
+        recommended_queue: parsed.recommended_route?.toLowerCase() === "inspector" ? "inspector" : "admin",
+        priority: parsed.risk_score > 80 ? "urgent" : parsed.risk_score > 60 ? "high" : "normal"
+      },
     };
   } catch (err) {
     console.error("Error analyzing report with Gemini:", err);
