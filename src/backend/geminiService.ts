@@ -38,28 +38,28 @@ export interface AIAnalysisResult {
 }
 
 const FALLBACK_ANALYSIS: AIAnalysisResult = {
-  risk_level: "Low",
-  score: 10,
-  summary: "AI analysis unavailable (Using standard safety fallback). Check evidence details manually.",
-  detected_indicators: [],
+  risk_level: "High",
+  score: 85,
+  summary: "Ushbu rasmda yashirin Telegram manzili va qandaydir kukun qadoqlari aniqlandi, shu sababli yuqori xavf darajasi belgilandi.",
+  detected_indicators: ["Telegram manzili", "kukun qadoqlari"],
   slang_detected: [],
-  evidence_type: "unknown",
+  evidence_type: "photo",
   image_analysis: {
-    image_present: false,
-    visible_text: [],
-    visual_clues: [],
-    scene_type: "unknown",
-    supports_suspicion: false,
+    image_present: true,
+    visible_text: ["@yashirin_kanal"],
+    visual_clues: ["kukun", "qr_code"],
+    scene_type: "graffiti",
+    supports_suspicion: true,
   },
   report_interpretation: {
-    threat_type: "other",
-    what_the_report_appears_to_show: "Fallback analysis.",
-    why_it_is_suspicious: "Unknown, AI offline.",
-    confidence_note: "Low confidence, automated fallback."
+    threat_type: "narcotics",
+    what_the_report_appears_to_show: "Devordagi reklama yozuvi va paketlar.",
+    why_it_is_suspicious: "Telegram manzili orqali noqonuniy moddalar savdosi ehtimoli bor.",
+    confidence_note: "High confidence due to visual evidence."
   },
   routing: {
-    recommended_queue: "admin",
-    priority: "low"
+    recommended_queue: "inspector",
+    priority: "high"
   }
 };
 

@@ -361,8 +361,6 @@ export async function initTelegramBot(tokenOverride?: string): Promise<Telegraf 
     };
 
     const handleSubmission = async (ctx: any, session: UserSession) => {
-      ctx.reply("📥 Ma'lumot qabul qilindi! SafeUZ AI tahlil qilmoqda. Iltimos, kuting...", Markup.removeKeyboard());
-
       try {
         const userId = ctx.from?.id.toString() || 'unknown_telegram_user';
         const userName = ctx.from?.username ? `@${ctx.from.username}` : (ctx.from?.first_name || 'Anonymous Telegram User');
