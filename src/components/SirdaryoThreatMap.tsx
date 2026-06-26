@@ -140,14 +140,14 @@ export default function SirdaryoThreatMap({ onDistrictSelect, hoveredDistrictId 
       
       {/* Container to scale easily - always centered exactly */}
       <div 
-        className="relative w-[800px] h-[800px] flex-shrink-0 flex items-center justify-center origin-center transition-transform duration-300 ease-out"
+        className="relative w-[800px] h-[800px] flex-shrink-0 origin-center transition-transform duration-300 ease-out"
         style={{ transform: `scale(${scale})` }}
       >
         
         {/* Radar Background & Grids */}
         <div 
           className="absolute pointer-events-none flex items-center justify-center"
-          style={{ left: '400px', top: '400px', transform: 'translate(-50%, -50%)', width: '800px', height: '800px' }}
+          style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '800px', height: '800px' }}
         >
           <div className="w-[700px] h-[700px] rounded-full border border-slate-800/80 bg-slate-900/20"></div>
           <div className="absolute w-[500px] h-[500px] rounded-full border border-slate-700/50"></div>
@@ -172,7 +172,7 @@ export default function SirdaryoThreatMap({ onDistrictSelect, hoveredDistrictId 
         {/* Central Core */}
         <div 
           className="absolute z-10 w-24 h-24 bg-slate-950 border border-cyan-500 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(6,182,212,0.3)]"
-          style={{ left: '400px', top: '400px', transform: 'translate(-50%, -50%)' }}
+          style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
         >
            <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-20 animate-ping" style={{ animationDuration: '3s' }}></div>
            <Shield className="w-10 h-10 text-cyan-400" />
